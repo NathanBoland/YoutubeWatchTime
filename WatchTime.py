@@ -35,9 +35,7 @@ start_time = time.time()
 if os.name == "posix":
     original_profile_path = "/Users/nathan/Library/Application Support/Firefox/Profiles/bn3d7uvb.default-release-1"
 elif os.name == "nt":
-    original_profile_path = (
-        r"C:\Users\Nathan\AppData\Roaming\Mozilla\Firefox\Profiles\j4grchvt.default-release"
-    )
+    original_profile_path = r"C:\Users\Nathan\AppData\Roaming\Mozilla\Firefox\Profiles\j4grchvt.default-release"
 
 print("Started")
 # temp_profile_path = tempfile.mkdtemp()
@@ -181,7 +179,7 @@ else:
 
         # gets amount of videos
         video_div = wait.until(
-            EC.presence_of_element_located((By.CLASS_NAME, '//*[@id="contents"]'))
+            EC.presence_of_element_located((By.XPATH, '//*[@id="contents"]'))
         )
         videos = video_div.find_elements(
             By.XPATH,
@@ -266,5 +264,5 @@ else:
         print("No videos watched today")
 
 temp_profile_path = None
-# driver.quit()
+driver.quit()
 quit()
