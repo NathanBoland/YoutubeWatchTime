@@ -309,13 +309,17 @@ def SpreadSheet():
     keyboard.press('a')
     keyboard.release('a')
 
+    
+
     # print(pyperclip.paste())
     # actions.send_keys(Keys.ARROW_RIGHT)
 
 
 # Run Sequence
 
-SpreadSheet()
+YouTube()
+
+# SpreadSheet()
 
 
 temp_profile_path = None
