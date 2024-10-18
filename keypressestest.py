@@ -6,9 +6,19 @@ key = Controller()
 
 import pyperclip
 
+# detect os
+import platform
+
+if platform.system() == "Windows":
+    # Windows
+    copyKey = Key.ctrl
+elif platform.system() == "Darwin":
+    # MacOS
+    copyKey = Key.cmd
+
 
 def delay():
-    time.sleep(0.07)
+    time.sleep(0.1)
 
 
 def press(keyToPress):
@@ -26,7 +36,7 @@ def multiPress(key1, key2):
 
 
 def getCell():
-    with key.pressed(Key.cmd):
+    with key.pressed(copyKey):
         key.press("c")
         key.release("c")
     delay()
@@ -34,7 +44,7 @@ def getCell():
 
 
 def goHome():
-    with key.pressed(Key.cmd):
+    with key.pressed(copyKey):
         for i in range(10):
             press(Key.up)
             press(Key.left)
@@ -84,6 +94,7 @@ def findCell(strToFind="", strDirection="Down"):
 
 
 time.sleep(2)
+goHome()
 
 # finds current date
 currentCell = findCell(date.today().strftime("%m/%d/%Y").replace("/0", "/"), "Down")
