@@ -7,6 +7,8 @@
 
 shorts_to_time_constant = 0.78301
 
+from SpreadSheetInterface import *
+
 import os
 import shutil
 import tempfile
@@ -26,13 +28,22 @@ from pynput.keyboard import Key, Controller
 import time
 import psutil
 
+class WatchTime:
+    def __init__(self, amtShorts, amtVideos, timeShorts, timeVideos, totalTime):
+        self.amtShorts = amtShorts
+        self.amtVideos = amtVideos
+        self.timeShorts = timeShorts
+        self.timeVideos = timeVideos
+        self.totalTime = totalTime
+
+
 start_time = time.time()
 
 # Check if Firefox is running and terminate it
-for process in psutil.process_iter(["pid", "name"]):
-    if process.info["name"] == "firefox.exe":
-        os.kill(process.info["pid"], 9)
-        print(f"Terminated Firefox process with PID: {process.info['pid']}")
+# for process in psutil.process_iter(["pid", "name"]):
+#     if process.info["name"] == "firefox.exe":
+#         os.kill(process.info["pid"], 9)
+#         print(f"Terminated Firefox process with PID: {process.info['pid']}")
 
 
 start_time = time.time()
@@ -76,19 +87,21 @@ start_time = time.time()
 wait = WebDriverWait(driver, 10)
 
 
-def YouTube():
+def YouTube(daysToGet = 0):
 
     driver.get("https://www.youtube.com/feed/history")
     time.sleep(5)
+    
+    watchTime = WatchTime(0, 0, "", "", "")
 
     # Close any additional tabs that might have opened
-    for handle in driver.window_handles:
-        driver.switch_to.window(handle)
-        if "YouTube" not in driver.title:
-            driver.close()
+    # for handle in driver.window_handles:
+    #     driver.switch_to.window(handle)
+    #     if "YouTube" not in driver.title:
+    #         driver.close()
 
     # Switch back to the main YouTube tab
-    driver.switch_to.window(driver.window_handles[0])
+    # driver.switch_to.window(driver.window_handles[0])
 
     # Ensure we are on the YouTube history page
     # if driver.current_url != 'https://www.youtube.com/feed/history':
@@ -109,6 +122,24 @@ def YouTube():
     except:
         print(f"")
 
+    
+    
+    ytDays = wait.until(
+        EC.presence_of_all_elements_located(
+            (
+                By.XPATH, 
+                "/html/body/ytd-app/div[1]/ytd-page-manager/ytd-browse/ytd-two-column-browse-results-renderer/div[1]/ytd-section-list-renderer/div[2]/ytd-item-section-renderer",
+            )
+        )
+    )
+    if ytDays:
+        for ytDay in ytDays:
+            # if ytDay.find_element(By.XPATH, "//*[@id=\"title\"]").text() != (date.today() - timedelta(days=2)).strftime("%A"):
+            #     ytDays.remove(ytDay)
+            print(ytDay.find_element(By.XPATH, "//*[@id=\"title\"]").text)
+    else:
+        print("No days found")
+    
     try:
         # checks if youve watched anything today
         todayCheck = wait.until(
@@ -169,18 +200,22 @@ def YouTube():
                         By.TAG_NAME, "ytm-shorts-lockup-view-model-v2"
                     )
                 )
+                watchTime.amtShorts = no_shorts
                 time_shorts = no_shorts * shorts_to_time_constant
 
                 print(f"Number of shorts watched: {no_shorts}")
                 if time_shorts < 1:
+                    watchTime.timeShorts = f"{time_shorts * 60:.2f}s"
                     print(f"Estimated time on shorts {time_shorts * 60:.2f}s")
                 elif time_shorts < 60:
                     minutes = int(time_shorts)
                     seconds = int((time_shorts - minutes) * 60)
+                    watchTime.timeShorts = f"{int(time_shorts)}m {int((time_shorts%1)*60)}s"
                     print(
                         f"Estimated time on shorts {int(time_shorts)}m {int((time_shorts%1)*60)}s"
                     )
                 elif time_shorts >= 60:
+                    watchTime.timeShorts = f"{int(time_shorts/60)}h {int(((time_shorts/60)%1)*60)}m {int((time_shorts%1)*60)}s"
                     print(
                         f"Estimated time on shorts {int(time_shorts/60)}h {int(((time_shorts/60)%1)*60)}m {int((time_shorts%1)*60)}s"
                     )
@@ -199,6 +234,7 @@ def YouTube():
 
             totalTime = 0
             watchedVideos = len(videos)
+            watchTime.amtVideos = watchedVideos
             for video in videos:
 
                 # gets video percent as int
@@ -249,14 +285,17 @@ def YouTube():
 
             # Time watching videos
             if totalTime < 1:
+                watchTime.timeVideos = f"{totalTime * 60:.2f}s"
                 print(f"Time watching videos: {totalTime * 60:.2f}s")
             elif totalTime < 60:
                 minutes = int(totalTime)
                 seconds = int((totalTime - minutes) * 60)
+                watchTime.timeVideos = f"{int(totalTime)}m {int((totalTime%1)*60)}s"
                 print(
                     f"Time watching videos: {int(totalTime)}m {int((totalTime%1)*60)}s"
                 )
             elif totalTime >= 60:
+                watchTime.timeVideos = f"{int(totalTime/60)}h {int(((totalTime/60)%1)*60)}m {int((totalTime%1)*60)}s"
                 print(
                     f"Time watching videos: {int(totalTime/60)}h {int(((totalTime/60)%1)*60)}m {int((totalTime%1)*60)}s"
                 )
@@ -264,26 +303,31 @@ def YouTube():
             # Total Time
             totalTime += time_shorts
             if totalTime < 1:
+                watchTime.totalTime = f"{totalTime * 60:.2f}s"
                 print(f"\nTotal YouTube Time: {totalTime * 60:.2f}s")
             elif totalTime < 60:
                 minutes = int(totalTime)
                 seconds = int((totalTime - minutes) * 60)
+                watchTime.totalTime = f"{int(totalTime)}m {int((totalTime%1)*60)}s"
                 print(
                     f"\nTotal YouTube Time: {int(totalTime)}m {int((totalTime%1)*60)}s"
                 )
             elif totalTime >= 60:
+                watchTime.totalTime = f"{int(totalTime/60)}h {int(((totalTime/60)%1)*60)}m {int((totalTime%1)*60)}s"
                 print(
                     f"\nTotal YouTube Time: {int(totalTime/60)}h {int(((totalTime/60)%1)*60)}m {int((totalTime%1)*60)}s"
                 )
 
         else:
             print("No videos watched today")
+            
+    return watchTime
 
 
 def SpreadSheet():
     print("going to doc page")
     driver.get(
-        "https://docs.google.com/spreadsheets/d/1SHfEj9MiS36Mlh4VT4vss6zZeNuDPRZJd1LvC6Jm4R8/edit?gid=0#gid=0"
+        "https://docs.google.com/spreadsheets/d/1f4E283QHxm8aUjfBSD-DgNlR6VO-dmu-/edit?gid=441154842#gid=441154842"
     )
     time.sleep(5)
 
@@ -301,25 +345,20 @@ def SpreadSheet():
         )
     except:
         print("Could not find Spreadsheet")
-    
-    keyboard = Controller()
-
-    # for i in range(4):
-
-    keyboard.press('a')
-    keyboard.release('a')
-
-    
-
-    # print(pyperclip.paste())
-    # actions.send_keys(Keys.ARROW_RIGHT)
 
 
 # Run Sequence
 
-YouTube()
 
-# SpreadSheet()
+SpreadSheet()
+daysToGet = getLatestYtEntry()
+
+watchTime = YouTube(daysToGet)
+
+SpreadSheet()
+setWatchTime(watchTime)
+
+
 
 
 temp_profile_path = None

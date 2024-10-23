@@ -1,10 +1,16 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
+import os
 import time
 from pynput.keyboard import Key, Controller
 
 key = Controller()
 
 import pyperclip
+
+if os.name == "posix":
+    copyKey = Key.cmd
+elif os.name == "nt":
+    copyKey = Key.ctrl
 
 
 def delay():
@@ -23,31 +29,45 @@ def multiPress(key1, key2):
     delay()
 
 def getCell():
-    with key.pressed(Key.cmd):
+    with key.pressed(copyKey):
         key.press("c")
         key.release("c")
     delay()
     return pyperclip.paste()
 
 def goHome():
-    with key.pressed(Key.cmd):
+    with key.pressed(copyKey):
         for i in range(10):
             press(Key.up)
             press(Key.left)
 
 def goAmt(Amt=0, strDirection="Down"):
     # set direction
-    match strDirection:
-        case "Down":
-            Direction = Key.down
-        case "Up":
-            Direction = Key.up
-        case "Left":
-            Direction = Key.left
-        case "Right":
-            Direction = Key.right
-        case _:
-            raise ValueError("Invalid direction")
+    if Amt < 0:
+        Amt = Amt * -1
+        match strDirection:
+            case "Down":
+                Direction = Key.up
+            case "Up":
+                Direction = Key.down
+            case "Left":
+                Direction = Key.right
+            case "Right":
+                Direction = Key.left
+            case _:
+                raise ValueError("Invalid direction")
+    else:
+        match strDirection:
+            case "Down":
+                Direction = Key.down
+            case "Up":
+                Direction = Key.up
+            case "Left":
+                Direction = Key.left
+            case "Right":
+                Direction = Key.right
+            case _:
+                raise ValueError("Invalid direction")
 
     for i in range(Amt):
         press(Direction)
@@ -81,19 +101,56 @@ def getLatestYtEntry():
     # go to youtube column
     amtRight = findCell("Youtube", "Right")
     # go to most recent youtube entry
-    multiPress(Key.cmd, Key.down)
+    multiPress(copyKey, Key.down)
     # go back to date
     goAmt(amtRight, "Left")
     # check date difference from current
-    previousDate = datetime.strptime(getCell(), "%m/%d/%Y")
+    previousDate = datetime.strptime(getCell(), "%d/%m/%Y")
     currentDate = date.today()
     dateDif = currentDate.toordinal() - previousDate.toordinal()
+    
+    # print dates to current day
+    neg = 1
+    if dateDif < 0:
+        neg = -1
+        dateDif = dateDif * -1
+    for i in range(dateDif):
+        goAmt(neg, "Down")
+        # type in previous date + 1
+        key.type((previousDate + timedelta(days=(i + 1) * neg)).strftime("%d/%m/%Y"))
+
+    
+    
+    
     # go back to yt column
     goAmt(amtRight, "Right")
-    goAmt(dateDif, "Down")
     # ends with cursor on first yt column
     return dateDif
+class WatchTime:
+    def __init__(self, amtShorts, amtVideos, timeShorts, timeVideos, totalTime):
+        self.amtShorts = amtShorts
+        self.amtVideos = amtVideos
+        self.timeShorts = timeShorts
+        self.timeVideos = timeVideos
+        self.totalTime = totalTime
+        
+a = WatchTime(1, 1, "0h", "0h", "0h")
 
+def setWatchTime(watchTime = WatchTime):
+    key.type(watchTime.totalTime)
+    press(Key.tab)
+    key.type(str(watchTime.amtShorts))
+    press(Key.tab)
+    key.type(watchTime.timeShorts)
+    press(Key.tab)
+    key.type(str(watchTime.amtVideos))
+    press(Key.tab)
+    key.type(watchTime.timeVideos)
+    multiPress(copyKey, 's')
+    time.sleep(5)
+    
 
-time.sleep(2)
-daysToGet = getLatestYtEntry()
+# time.sleep(2)
+# # setWatchTime(a)
+# daysToGet = getLatestYtEntry()
+# setWatchTime(a)
