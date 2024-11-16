@@ -136,18 +136,26 @@ class WatchTime:
         
 a = WatchTime(1, 1, "0h", "0h", "0h")
 
-def setWatchTime(watchTime = WatchTime):
-    key.type(watchTime.totalTime)
+def setWatchTime(totalTime, amtShorts, timeShorts, amtVideos, timeVideos):
+    """
+    convert time values from seconds to hours:minutes:seconds
+    """
+    
+    totalTime = time.strftime("%Hh%Mm%Ss", time.gmtime(totalTime))
+    timeShorts = time.strftime("%Hh%Mm%Ss", time.gmtime(timeShorts))
+    timeVideos = time.strftime("%Hh%Mm%Ss", time.gmtime(timeVideos))
+    key.type(totalTime)
     press(Key.tab)
-    key.type(str(watchTime.amtShorts))
+    key.type(str(amtShorts))
     press(Key.tab)
-    key.type(watchTime.timeShorts)
+    key.type(timeShorts)
     press(Key.tab)
-    key.type(str(watchTime.amtVideos))
+    key.type(str(amtVideos))
     press(Key.tab)
-    key.type(watchTime.timeVideos)
+    key.type(timeVideos)
     multiPress(copyKey, 's')
-    time.sleep(5)
+    goAmt(4, "Left")
+    goAmt(1, "Up")
     
 
 # time.sleep(2)
