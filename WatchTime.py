@@ -5,7 +5,7 @@
 
 # Ensure that sync is turned off for that b
 
-shorts_to_time_constant = 0.78301
+shorts_to_time_constant = 0.78301 * 60
 
 from SpreadSheetInterface import *
 
@@ -286,14 +286,17 @@ def YouTube(daysToGet = 0):
         # Time watching videos
         dayWatchTime.timeVideos = totalTime
         
-        # add to list, if the date is the same as the last one, add the times together
-        if len(allDays) >= 1:
-            if allDays[-1].date == dayWatchTime.date:
-                allDays[-1] = allDays[-1] + dayWatchTime
-            else:
-                allDays.append(dayWatchTime)
-        else: 
+        # add to list, if the date is the same as any other day, add the times together
+        
+        if len(allDays) == 0:
             allDays.append(dayWatchTime)
+        else:
+            for i in range(len(allDays)):
+                if allDays[i].date == dayWatchTime.date:
+                    allDays[i] += dayWatchTime
+                    break
+                elif i == len(allDays) - 1:
+                    allDays.append(dayWatchTime)
 
         # # Total Time
         # totalTime += time_shorts
@@ -320,9 +323,10 @@ def YouTube(daysToGet = 0):
         """
         for i in range(len(allDays)):
             if i == 0:
-                continue
-            if allDays[i].date != allDays[i-1].date - timedelta(days=1):
-                allDays.insert(i, WatchTime(allDays[i-1].date - timedelta(days=1), 0, 0, 0))
+                continue # skip the first day
+            if allDays[i].date != allDays[i-1].date - timedelta(days=1): # if the current day is not the day before
+                allDays.insert(i, WatchTime(allDays[i-1].date - timedelta(days=1), 0, 0, 0)) # add in a blank day
+                
         
         
         for i in range(len(allDays) - 1, -1, -1):
@@ -384,6 +388,7 @@ daysWatchTime = YouTube(daysToGet)
 
 SpreadSheet()
 getLatestYtEntry()
+goAmt(1, "Up")
 for day in daysWatchTime:
     timeShorts = day.amtShorts * shorts_to_time_constant
     setWatchTime(day.timeVideos + timeShorts, day.amtShorts, timeShorts, day.amtVideos, day.timeVideos)
