@@ -5,9 +5,9 @@
 
 # Ensure that sync is turned off for that b
 
-shorts_to_time_constant = 0.78301 * 60
+shorts_to_time_constant = 1.353713755 * 60
 
-from SpreadSheetInterface import *
+# from SpreadSheetInterface import *
 
 import os
 import shutil
@@ -27,8 +27,181 @@ from pynput.keyboard import Key, Controller
 
 import time
 import psutil
+import atexit
 
-class WatchTime:
+# SpreadSheetInterface
+
+key = Controller()
+
+import pyperclip
+from datetime import date, datetime, timedelta
+
+
+if os.name == "posix":
+    copyKey = Key.cmd
+elif os.name == "nt":
+    copyKey = Key.ctrl
+
+
+def delay():
+    time.sleep(0.09)
+
+def press(keyToPress):
+    "Press and unpress the specifed Key obj or Char"
+    key.press(keyToPress)
+    key.release(keyToPress)
+    delay()
+
+def multiPress(key1, key2):
+    "Press and unpress key2 while key1 is held down"
+    with key.pressed(key1):
+        press(key2)
+    delay()
+
+def getCell():
+    with key.pressed(copyKey):
+        key.press("c")
+        key.release("c")
+    delay()
+    return pyperclip.paste()
+
+def goHome():
+    with key.pressed(copyKey):
+        for i in range(3):
+            press(Key.up)
+            delay()
+            press(Key.left)
+            delay()
+            print("Homeloop: ", i)
+    print("Home Done")
+
+def goAmt(Amt=0, strDirection="Down"):
+    # set direction
+    if Amt < 0:
+        Amt = Amt * -1
+        match strDirection:
+            case "Down":
+                Direction = Key.up
+            case "Up":
+                Direction = Key.down
+            case "Left":
+                Direction = Key.right
+            case "Right":
+                Direction = Key.left
+            case _:
+                raise ValueError("Invalid direction")
+    else:
+        match strDirection:
+            case "Down":
+                Direction = Key.down
+            case "Up":
+                Direction = Key.up
+            case "Left":
+                Direction = Key.left
+            case "Right":
+                Direction = Key.right
+            case _:
+                raise ValueError("Invalid direction")
+
+    for i in range(Amt):
+        press(Direction)
+
+def findCell(strToFind="", strDirection="Down"):
+    "Goes to a string in the direction specified"
+    # set direction
+    match strDirection:
+        case "Down":
+            Direction = Key.down
+            timeOut = 100
+        case "Up":
+            Direction = Key.up
+            timeOut = 100
+        case "Left":
+            Direction = Key.left
+            timeOut = 25
+        case "Right":
+            Direction = Key.right
+            timeOut = 25
+        case _:
+            raise ValueError("Invalid direction")
+
+    for i in range(timeOut):
+        if getCell() == strToFind:
+            return i
+        key.press(Direction)
+
+def getLatestYtEntry():
+    print("Going Home")
+    goHome()
+    print("sleeping 1")
+    time.sleep(1)
+    print("Finding Youtube Column")
+    # go to youtube column
+    amtRight = findCell("Youtube", "Right")
+    # go to most recent youtube entry
+    multiPress(copyKey, Key.down)
+    # go back to date
+    goAmt(amtRight, "Left")
+    # check date difference from current
+    previousDate = datetime.strptime(getCell(), "%d/%m/%Y")
+    currentDate = date.today()
+    dateDif = currentDate.toordinal() - previousDate.toordinal()
+    
+    # print dates to current day
+    neg = 1
+    if dateDif < 0:
+        neg = -1
+        dateDif = dateDif * -1
+    for i in range(dateDif):
+        goAmt(neg, "Down")
+        # type in previous date + 1
+        key.type((previousDate + timedelta(days=(i + 1) * neg)).strftime("%d/%m/%Y"))
+
+    
+    
+    
+    # go back to yt column
+    goAmt(amtRight, "Right")
+    # ends with cursor on first yt column
+    return dateDif
+class WatchTimeSheet:
+    def __init__(self, amtShorts, amtVideos, timeShorts, timeVideos, totalTime):
+        self.amtShorts = amtShorts
+        self.amtVideos = amtVideos
+        self.timeShorts = timeShorts
+        self.timeVideos = timeVideos
+        self.totalTime = totalTime
+        
+
+def setWatchTime(totalTime, amtShorts, timeShorts, amtVideos, timeVideos):
+    """
+    convert time values from seconds to hours:minutes:seconds
+    """
+    
+    totalTime = time.strftime("%H:%M", time.gmtime(totalTime))
+    timeShorts = time.strftime("%H:%M", time.gmtime(timeShorts))
+    timeVideos = time.strftime("%H:%M", time.gmtime(timeVideos))
+    key.type(totalTime)
+    press(Key.tab)
+    key.type(str(amtShorts))
+    press(Key.tab)
+    key.type(timeShorts)
+    press(Key.tab)
+    key.type(str(amtVideos))
+    press(Key.tab)
+    key.type(timeVideos)
+    multiPress(copyKey, 's')
+    goAmt(4, "Left")
+    goAmt(1, "Up")
+
+
+
+
+
+
+
+
+class WatchTimeSheet:
     def __init__(self, date, amtShorts, amtVideos, timeVideos):
         self.date = date
         self.amtShorts = amtShorts
@@ -36,7 +209,7 @@ class WatchTime:
         self.timeVideos = timeVideos
     
     def __add__(self, other):
-        return WatchTime(self.date, self.amtShorts + other.amtShorts, self.amtVideos + other.amtVideos, self.timeVideos + other.timeVideos)
+        return WatchTimeSheet(self.date, self.amtShorts + other.amtShorts, self.amtVideos + other.amtVideos, self.timeVideos + other.timeVideos)
     
     def print_details(self):
         print(f"Date: {self.date}  - ")
@@ -203,7 +376,7 @@ def YouTube(daysToGet = 0):
     for ytDay in ytDays:
         print(toDate(ytDay).strftime("%d-%m-%Y"))
         
-        dayWatchTime = WatchTime(toDate(ytDay), 0, 0, 0)
+        dayWatchTime = WatchTimeSheet(toDate(ytDay), 0, 0, 0)
         
         # Shorts Counter
         try:
@@ -325,7 +498,7 @@ def YouTube(daysToGet = 0):
             if i == 0:
                 continue # skip the first day
             if allDays[i].date != allDays[i-1].date - timedelta(days=1): # if the current day is not the day before
-                allDays.insert(i, WatchTime(allDays[i-1].date - timedelta(days=1), 0, 0, 0)) # add in a blank day
+                allDays.insert(i, WatchTimeSheet(allDays[i-1].date - timedelta(days=1), 0, 0, 0)) # add in a blank day
                 
         
         
@@ -352,9 +525,9 @@ def YouTube(daysToGet = 0):
 def SpreadSheet():
     print("going to doc page")
     driver.get(
-        "https://docs.google.com/spreadsheets/d/1f4E283QHxm8aUjfBSD-DgNlR6VO-dmu-/edit?gid=441154842#gid=441154842"
+        "https://docs.google.com/spreadsheets/d/1QfpxBXsewciVIR2ugXVhIK3btqWHQgjZ/edit?gid=441154842#gid=441154842"
     )
-    time.sleep(5)
+    time.sleep(1)
 
     # wait for spreadsheet to load
     wait.until(
@@ -370,7 +543,15 @@ def SpreadSheet():
         )
     except:
         print("Could not find Spreadsheet")
-
+        
+    driver.find_element(By.XPATH, "/html/body/div[4]/div/div[2]/div/div[5]/div[1]/div/div[2]").click()
+    time.sleep(1)
+    # press shift key once to wake  computer
+    keyboard = Controller()
+    keyboard.press(Key.shift)
+    keyboard.release(Key.shift)
+    time.sleep(1)
+    print("shift pressed")
 
 # Run Sequence
 """
@@ -380,9 +561,22 @@ run yt function with missing entries
 
 
 """
+def cleanup():
+    global temp_profile_path
+    if temp_profile_path:
+        shutil.rmtree(temp_profile_path)
+    if driver:
+        driver.quit()
+        
 
 SpreadSheet()
+print("waiting 15")
+time.sleep(15)
+print("done waiting 15")
 daysToGet = getLatestYtEntry()
+if daysToGet <= 1:
+    cleanup()
+    exit()
 
 daysWatchTime = YouTube(daysToGet)
 
@@ -396,6 +590,6 @@ for day in daysWatchTime:
 
 
 
-temp_profile_path = None
-driver.quit()
+
+atexit.register(cleanup)
 quit()

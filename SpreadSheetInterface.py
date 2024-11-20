@@ -37,9 +37,13 @@ def getCell():
 
 def goHome():
     with key.pressed(copyKey):
-        for i in range(10):
+        for i in range(3):
             press(Key.up)
+            delay()
             press(Key.left)
+            delay()
+            print("Homeloop: ", i)
+    print("Home Done")
 
 def goAmt(Amt=0, strDirection="Down"):
     # set direction
@@ -97,7 +101,11 @@ def findCell(strToFind="", strDirection="Down"):
         key.press(Direction)
 
 def getLatestYtEntry():
+    print("Going Home")
     goHome()
+    print("sleeping 1")
+    time.sleep(1)
+    print("Finding Youtube Column")
     # go to youtube column
     amtRight = findCell("Youtube", "Right")
     # go to most recent youtube entry
@@ -126,7 +134,7 @@ def getLatestYtEntry():
     goAmt(amtRight, "Right")
     # ends with cursor on first yt column
     return dateDif
-class WatchTime:
+class WatchTimeSheet:
     def __init__(self, amtShorts, amtVideos, timeShorts, timeVideos, totalTime):
         self.amtShorts = amtShorts
         self.amtVideos = amtVideos
@@ -134,16 +142,15 @@ class WatchTime:
         self.timeVideos = timeVideos
         self.totalTime = totalTime
         
-a = WatchTime(1, 1, "0h", "0h", "0h")
 
 def setWatchTime(totalTime, amtShorts, timeShorts, amtVideos, timeVideos):
     """
     convert time values from seconds to hours:minutes:seconds
     """
     
-    totalTime = time.strftime("%Hh%Mm%Ss", time.gmtime(totalTime))
-    timeShorts = time.strftime("%Hh%Mm%Ss", time.gmtime(timeShorts))
-    timeVideos = time.strftime("%Hh%Mm%Ss", time.gmtime(timeVideos))
+    totalTime = time.strftime("%H:%M", time.gmtime(totalTime))
+    timeShorts = time.strftime("%H:%M", time.gmtime(timeShorts))
+    timeVideos = time.strftime("%H:%M", time.gmtime(timeVideos))
     key.type(totalTime)
     press(Key.tab)
     key.type(str(amtShorts))
@@ -157,7 +164,7 @@ def setWatchTime(totalTime, amtShorts, timeShorts, amtVideos, timeVideos):
     goAmt(4, "Left")
     goAmt(1, "Up")
     
-
+print("Wrong File")
 # time.sleep(2)
 # # setWatchTime(a)
 # daysToGet = getLatestYtEntry()
