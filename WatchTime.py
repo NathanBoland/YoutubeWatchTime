@@ -118,10 +118,10 @@ def findCell(strToFind="", strDirection="Down"):
             timeOut = 100
         case "Left":
             Direction = Key.left
-            timeOut = 25
+            timeOut = 30
         case "Right":
             Direction = Key.right
-            timeOut = 25
+            timeOut = 30
         case _:
             raise ValueError("Invalid direction")
 
@@ -233,7 +233,7 @@ start_time = time.time()
 if os.name == "posix":
     original_profile_path = "/Users/nathan/Library/Application Support/Firefox/Profiles/bn3d7uvb.default-release-1"
 elif os.name == "nt":
-    original_profile_path = r"C:\Users\Nathan\AppData\Roaming\Mozilla\Firefox\Profiles\j4grchvt.default-release"
+    original_profile_path = r"C:\Users\Nathan\AppData\Roaming\Mozilla\Firefox\Profiles\j398qtp5.default-release-1-1734406463058"
 
 temp_profile_path = tempfile.mkdtemp()
 
